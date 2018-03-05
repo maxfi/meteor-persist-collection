@@ -6,17 +6,22 @@ import { LocalCollection } from 'meteor/minimongo'
 extendGetItems(localforage)
 extendSetItems(localforage)
 
+const driver = (names) => names.map(name => localforage[name.toUpperCase()])
+
 export default class PersistedCollection extends Mongo.Collection {
 
-  constructor(...args) {
-    super(...args)
+  constructor(name, options) {
+    super(name, options)
+    this._driver = options.driver &&
+                   driver(options.driver) ||
+                   ['WEBSQL','INDEXEDDB','LOCALSTORAGE']
     this._isCommon = false
     this._isSyncing = new ReactiveVar(false)
   }
 
   _createLfInstance(col = {}) {
     return localforage.createInstance({
-      driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
+      driver: this._driver,
       name: 'persisted_collections',
       storeName: col._name || this._name
     })
