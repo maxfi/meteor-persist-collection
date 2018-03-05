@@ -16,9 +16,10 @@ Package.onUse(function (api) {
     'reactive-var@1.0.1'
   ])
 
+  api.mainModule('persist-collection.js', 'client');
+
   api.addFiles([
-    'connection-patch.js',
-    'persist-collection.js'
+    'connection-patch.js'
   ], 'client')
 
   Npm.depends({
