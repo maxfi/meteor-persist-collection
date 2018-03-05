@@ -6,6 +6,14 @@ import { LocalCollection } from 'meteor/minimongo'
 extendGetItems(localforage)
 extendSetItems(localforage)
 
+Mongo.Collection.prototype._createLfInstance = function (col = {}) {
+  return localforage.createInstance({
+    driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
+    name: 'persisted_collections',
+    storeName: col._name || this._name
+  })
+}
+
 Mongo.Collection.prototype._isCommon = false
 
 Mongo.Collection.prototype.isCommon = function (bool) {
@@ -22,22 +30,14 @@ Mongo.Collection.prototype.isSyncing = function () {
 
 Mongo.Collection.prototype.setPersisted = function (data) {
 
-  const store = localforage.createInstance({
-    driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-    name: 'persisted_collections',
-    storeName: this._name
-  })
+  const store = this._createLfInstance()
 
   return store.setItems(data)
 }
 
 Mongo.Collection.prototype.getPersisted = function (ids) {
 
-  const store = localforage.createInstance({
-    driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-    name: 'persisted_collections',
-    storeName: this._name
-  })
+  const store = this._createLfInstance()
 
   if (_.isString(ids))
     return store.getItem(ids)
@@ -49,11 +49,7 @@ Mongo.Collection.prototype.getPersisted = function (ids) {
 
 Mongo.Collection.prototype.removePersisted = function (ids) {
 
-  const store = localforage.createInstance({
-    driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-    name: 'persisted_collections',
-    storeName: this._name
-  })
+  const store = this._createLfInstance()
 
   if (_.isString(ids))
     return store.removeItem(ids)
@@ -65,11 +61,7 @@ Mongo.Collection.prototype.removePersisted = function (ids) {
 
 Mongo.Collection.prototype.clearPersisted = function () {
 
-  const store = localforage.createInstance({
-    driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-    name: 'persisted_collections',
-    storeName: this._name
-  })
+  const store = this._createLfInstance()
 
   return store.clear()
 }
@@ -82,11 +74,7 @@ Mongo.Collection.prototype.syncPersisted = function () {
 
     col._isSyncing.set(true)
 
-    const store = localforage.createInstance({
-      driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-      name: 'persisted_collections',
-      storeName: col._name
-    })
+    const store = this._createLfInstance(col)
 
     const inserted = []
     const updated = []
@@ -191,11 +179,7 @@ Mongo.Collection.prototype.attachPersister = function (selector, options) {
 
   col._persisters[persisterId] = persister
 
-  persister._store = localforage.createInstance({
-    driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-    name: 'persisted_collections',
-    storeName: col._name
-  })
+  persister._store = this._createLfInstance(col)
 
   persister._observeHandle = col.find(selector || {}, options || {}).observe({
     added (doc) {
